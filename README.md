@@ -7,4 +7,7 @@
 - **Create VPC (Virtual Private Cloud)** to launch AWS resources into a virtual network
 - **Create public subnet** (subnet that's associated with a route table that has a route to an internet gateway) and **private subnet** (a subnet that is associated with a route table that doesn't have a route to an internet gateway)
 - **Create Policy Group** that allows SSH and HTTP traffic
+- **create gateway**  to access an instance in public subnet
+- **create route record
+- **link the route table to the public subnet
 - **Create a new EC2 instance** in the VPC we created with the policy group we added
