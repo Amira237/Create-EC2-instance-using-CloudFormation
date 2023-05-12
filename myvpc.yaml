@@ -1,10 +1,13 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Creates a VPC with public and private subnets
+# define resources
 Resources:
   VPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 192.168.101.0/24
+      
+  # create public subnet    
   PublicSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
@@ -12,6 +15,8 @@ Resources:
       CidrBlock: 192.168.101.0/28
       MapPublicIpOnLaunch: true
       VpcId: !Ref VPC
+      
+  # create private subnet     
   PrivateSubnetB:
     Type: AWS::EC2::Subnet
     Properties:
@@ -19,22 +24,14 @@ Resources:
       CidrBlock: 192.168.101.32/28
       MapPublicIpOnLaunch: false
       VpcId: !Ref VPC
-  AmiraInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      AvailabilityZone: "us-west-1a"
-      ImageId: ami-0036b4598ccd42565
-      InstanceType: t2.micro
-      KeyName: !Ref AmiraKeyPair
-      SecurityGroupIds: 
-        - Ref: AmiraSecurityGroup
-      SubnetId: 
-          Ref: PublicSubnetA
-
+  
+  # create keypair
   AmiraKeyPair:
     Type: 'AWS::EC2::KeyPair'
     Properties:
       KeyName: AmiraKeyPair
+      
+  # create security group to enable SSH & HHTP 
   AmiraSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -49,4 +46,43 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
+          
+   # create gateway to access an instance in public subnet
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  # create route table
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  # create route record
+  InternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGateway
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref RouteTable
+
+  # link the route table to the public subnet
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PublicSubnetA
+      
+  # create instance    
+  AmiraInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: "us-west-1a"
+      ImageId: ami-0036b4598ccd42565
+      InstanceType: t2.micro
+      KeyName: !Ref AmiraKeyPair
+      SecurityGroupIds: 
+        - Ref: AmiraSecurityGroup
+      SubnetId: 
+          Ref: PublicSubnetA    
  
